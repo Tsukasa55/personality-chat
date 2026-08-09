@@ -27,7 +27,7 @@ function proceed() {
       <WolfAvatar state="normal" />
 
       <h1>月夜の狼チャット</h1>
-      <p class="subtitle">ビッグファイブ性格診断に基づいた会話AIアシスタント</p>
+      <p class="subtitle">狼アバターの性格を決めて話せる会話AIアシスタント</p>
 
       <div class="form-group">
         <label>Google AI APIキー</label>
@@ -45,7 +45,7 @@ function proceed() {
       <p v-if="error" class="error">{{ error }}</p>
 
       <button class="btn-primary" @click="proceed" :disabled="!apiKey.trim()">
-        {{ store.hasProfile ? 'チャットを開始' : '性格診断へ進む' }}
+        {{ store.hasProfile ? 'チャットを開始' : '狼の性格を設定する' }}
       </button>
 
       <p class="note">

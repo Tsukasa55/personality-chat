@@ -76,9 +76,13 @@ const traitLabels: Record<string, string> = {
   <div class="quiz-page">
     <div class="quiz-card" v-if="!result">
       <div class="quiz-header">
-        <h2>性格診断</h2>
+        <h2>狼の性格を設定</h2>
         <span class="progress-label">{{ current + 1 }} / {{ total }}</span>
       </div>
+
+      <p class="quiz-intro">
+        どんな月夜の狼と話したいですか？各項目に、そう思う度合いで答えてください。
+      </p>
 
       <div class="progress-bar">
         <div class="progress-fill" :style="{ width: progress + '%' }" />
@@ -113,7 +117,7 @@ const traitLabels: Record<string, string> = {
           @click="submit"
           :disabled="submitting"
         >
-          {{ submitting ? '送信中...' : '診断結果を見る' }}
+          {{ submitting ? '送信中...' : 'この性格で決定' }}
         </button>
         <button
           v-else
@@ -130,7 +134,8 @@ const traitLabels: Record<string, string> = {
 
     <!-- 結果画面 -->
     <div class="result-card" v-else>
-      <h2>診断結果</h2>
+      <h2>設定した性格</h2>
+      <p class="quiz-intro">この設定で月夜の狼が応答します。</p>
       <div class="trait-bars">
         <div v-for="(val, key) in result" :key="key" class="trait-row">
           <span class="trait-name">{{ traitLabels[key] }}</span>
@@ -171,6 +176,7 @@ const traitLabels: Record<string, string> = {
 .quiz-header { display: flex; justify-content: space-between; align-items: center; }
 h2 { font-size: 20px; font-weight: 700; color: var(--accent2); }
 .progress-label { font-size: 13px; color: var(--text-muted); }
+.quiz-intro { font-size: 13px; color: var(--text-muted); line-height: 1.6; margin-top: -12px; }
 
 .progress-bar {
   height: 6px;

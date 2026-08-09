@@ -80,7 +80,7 @@ const hasMessages = computed(() => chatStore.messages.length > 0)
       <WolfAvatar :state="chatStore.avatarState" />
 
       <div class="sidebar-actions">
-        <button class="btn-ghost small" @click="router.push('/quiz')">📋 診断をやり直す</button>
+        <button class="btn-ghost small" @click="router.push('/quiz')">📋 性格を設定し直す</button>
         <button class="btn-ghost small danger" @click="clearHistory" :disabled="!hasMessages">
           🗑 履歴を削除
         </button>
@@ -96,7 +96,7 @@ const hasMessages = computed(() => chatStore.messages.length > 0)
     <main class="chat-main">
       <div class="chat-header">
         <h2>月夜の狼チャット</h2>
-        <span class="header-sub">あなたの性格に合わせて会話します</span>
+        <span class="header-sub">設定した性格で狼が応答します</span>
       </div>
 
       <div class="messages" ref="messagesEl">
