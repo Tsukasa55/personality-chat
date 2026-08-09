@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.env
+*.db
+*.db-shm
+*.db-wal
+
+# Node
+node_modules/
+dist/
+.vercel/
+
+# Misc
+.DS_Store
+*.log

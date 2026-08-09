@@ -1,0 +1,23 @@
+# Render Blueprint — https://render.com/docs/blueprint-spec
+# 使い方: GitHubにpush後、https://dashboard.render.com/blueprints で
+#         このリポジトリを選ぶだけでバックエンドが自動構築されます。
+services:
+  - type: web
+    name: personality-chat-api
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true          # Renderが安全な値を自動生成
+      - key: DATABASE_URL
+        value: sqlite+aiosqlite:////data/chat.db
+      - key: ALLOWED_ORIGINS
+        sync: false                   # デプロイ後にVercelのURLを入力
+    disk:
+      name: chat-data
+      mountPath: /data                # 会話履歴DBを永続化
+      sizeGB: 1

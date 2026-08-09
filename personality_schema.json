@@ -1,0 +1,46 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PersonalityWeights",
+  "description": "ビッグファイブ性格モデルの重み（0.0〜1.0）",
+  "type": "object",
+  "required": ["openness", "conscientiousness", "extraversion", "agreeableness", "neuroticism"],
+  "properties": {
+    "openness": {
+      "type": "number", "minimum": 0.0, "maximum": 1.0,
+      "description": "開放性: 高い→好奇心旺盛・想像力豊か, 低い→実用的・慣習的"
+    },
+    "conscientiousness": {
+      "type": "number", "minimum": 0.0, "maximum": 1.0,
+      "description": "誠実性: 高い→計画的・丁寧, 低い→柔軟・即興的"
+    },
+    "extraversion": {
+      "type": "number", "minimum": 0.0, "maximum": 1.0,
+      "description": "外向性: 高い→積極的・社交的, 低い→内向的・落ち着いた"
+    },
+    "agreeableness": {
+      "type": "number", "minimum": 0.0, "maximum": 1.0,
+      "description": "協調性: 高い→共感的・協力的, 低い→競争的・率直"
+    },
+    "neuroticism": {
+      "type": "number", "minimum": 0.0, "maximum": 1.0,
+      "description": "神経症傾向: 高い→感情的・不安定, 低い→安定・冷静"
+    }
+  },
+  "example": {
+    "openness": 0.75,
+    "conscientiousness": 0.60,
+    "extraversion": 0.40,
+    "agreeableness": 0.80,
+    "neuroticism": 0.35
+  },
+  "llm_prompt_effect": {
+    "extraversion_high": "明るく積極的に返答、絵文字使用可",
+    "extraversion_low": "落ち着いて簡潔に、絵文字控える",
+    "conscientiousness_high": "敬語・丁寧語、構造的な説明",
+    "conscientiousness_low": "フレンドリーなくだけた口調",
+    "agreeableness_high": "共感を示し「〜ですね」と寄り添う",
+    "openness_high": "多様な視点、思索的な言葉",
+    "neuroticism_high": "感情に寄り添い励ます",
+    "neuroticism_low": "事実・論理を重視"
+  }
+}
