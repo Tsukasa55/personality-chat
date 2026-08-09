@@ -65,6 +65,16 @@ def _parse_state(text: str) -> tuple[AvatarState, str]:
     return state, content
 
 
+# 使用するモデルの候補（上から順に試し、404等で使えなければ次へ）
+# ※ Googleのモデル提供状況は変わるため複数候補を用意している
+MODEL_CANDIDATES = [
+    "gemini-2.5-flash",
+    "gemini-2.0-flash",
+    "gemini-flash-latest",
+    "gemini-1.5-flash-latest",
+]
+
+
 async def generate_response(
     user_message: str,
     history: list[dict],  # [{"role": "user"|"model", "parts": [str]}]
@@ -73,17 +83,28 @@ async def generate_response(
 ) -> tuple[str, AvatarState]:
     """Gemini APIで応答を生成し、(応答テキスト, アバター状態) を返す"""
     genai.configure(api_key=api_key)
-    model = genai.GenerativeModel(
-        model_name="gemini-1.5-flash",
-        system_instruction=_build_system_prompt(weights),
+    system_prompt = _build_system_prompt(weights)
+
+    last_error: Exception | None = None
+    for model_name in MODEL_CANDIDATES:
+        try:
+            model = genai.GenerativeModel(
+                model_name=model_name,
+                system_instruction=system_prompt,
+            )
+            chat = model.start_chat(history=history)
+            response = await chat.send_message_async(user_message)
+            state, content = _parse_state(response.text)
+            return content, state
+        except Exception as e:  # 404 等はフォールバックして次のモデルへ
+            last_error = e
+            if "not found" in str(e).lower() or "404" in str(e):
+                continue
+            raise
+
+    raise RuntimeError(
+        f"利用可能なGeminiモデルが見つかりません。最後のエラー: {last_error}"
     )
-
-    chat = model.start_chat(history=history)
-    response = await chat.send_message_async(user_message)
-    raw_text = response.text
-
-    state, content = _parse_state(raw_text)
-    return content, state
 
 
 # デフォルト重みのフォールバック
