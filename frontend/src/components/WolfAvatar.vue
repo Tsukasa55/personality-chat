@@ -80,21 +80,24 @@ onMounted(() => {
 
 <style scoped>
 .avatar {
-  width: 200px;
-  height: 200px;
-  border-radius: 50%;
+  /* 動画(540x800・縦長)の比率に合わせ、見切れないようにする */
+  width: min(540px, 92vw);
+  aspect-ratio: 540 / 800;
+  max-height: 88vh;
+  border-radius: 16px;
   overflow: hidden;
   border: 3px solid #7c6af7;
-  box-shadow: 0 0 20px #7c6af766;
+  box-shadow: 0 0 24px #7c6af766;
   /* 枠色・グローは state に応じてインラインで上書き。滑らかに補間 */
   transition: border-color 0.5s ease, box-shadow 0.5s ease;
   background: #0b1020;
+  margin: 0 auto;
 }
 
 .avatar-media {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain; /* 縦横比を保ち全体を表示（見切れ防止） */
   display: block;
   transition: filter 0.5s ease; /* 状態フィルターの切替をなめらかに */
 }
