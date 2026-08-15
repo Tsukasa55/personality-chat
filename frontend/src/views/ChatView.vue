@@ -15,6 +15,8 @@ const input = ref('')
 const sending = ref(false)
 const error = ref('')
 const messagesEl = ref<HTMLElement | null>(null)
+const talking = ref(false)   // 応答直後に口を動かす
+let talkTimer: number | undefined
 
 // 物語・背景
 const background = ref('')
@@ -54,6 +56,13 @@ async function send() {
     const res = await api.sendMessage(userStore.userId, text, userStore.googleApiKey)
     chatStore.setMessages(res.history)
     chatStore.setAvatarState(res.avatar_state)
+    // 返答の長さに応じて口パクの時間を決める（1文字40ms・最大6秒）
+    talking.value = true
+    window.clearTimeout(talkTimer)
+    talkTimer = window.setTimeout(
+      () => { talking.value = false },
+      Math.min(6000, 700 + (res.reply?.length ?? 0) * 40),
+    )
     if (typeof res.background === 'string') background.value = res.background
     if (res.background_updated) {
       bgFlash.value = true
@@ -102,7 +111,7 @@ const hasMessages = computed(() => chatStore.messages.length > 0)
     <!-- サイドパネル（アバター＋背景） -->
     <aside class="sidebar">
       <div class="app-title">月夜の狼</div>
-      <WolfAvatar :state="chatStore.avatarState" />
+      <WolfAvatar :state="chatStore.avatarState" :talking="talking" />
 
       <div class="sidebar-actions">
         <button class="btn-ghost small" @click="router.push('/quiz')">📋 性格を設定し直す</button>
