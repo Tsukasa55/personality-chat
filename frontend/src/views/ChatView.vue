@@ -16,6 +16,12 @@ const sending = ref(false)
 const error = ref('')
 const messagesEl = ref<HTMLElement | null>(null)
 
+// 物語・背景
+const background = ref('')
+const bgSaving = ref(false)
+const bgFlash = ref(false)   // 会話による自動更新の合図
+const bgOpen = ref(true)
+
 onMounted(async () => {
   if (!userStore.googleApiKey) { router.push('/'); return }
   try {
@@ -28,6 +34,10 @@ onMounted(async () => {
       }
     }
     scrollBottom()
+  } catch { /* ignore */ }
+  try {
+    const bg = await api.getBackground(userStore.userId)
+    background.value = bg.background
   } catch { /* ignore */ }
 })
 
@@ -44,6 +54,12 @@ async function send() {
     const res = await api.sendMessage(userStore.userId, text, userStore.googleApiKey)
     chatStore.setMessages(res.history)
     chatStore.setAvatarState(res.avatar_state)
+    if (typeof res.background === 'string') background.value = res.background
+    if (res.background_updated) {
+      bgFlash.value = true
+      bgOpen.value = true
+      setTimeout(() => { bgFlash.value = false }, 4000)
+    }
     await nextTick()
     scrollBottom()
   } catch (e: unknown) {
@@ -62,6 +78,15 @@ function scrollBottom() {
   })
 }
 
+async function saveBackground() {
+  bgSaving.value = true
+  try {
+    await api.setBackground(userStore.userId, background.value)
+  } catch { /* ignore */ } finally {
+    bgSaving.value = false
+  }
+}
+
 async function clearHistory() {
   if (!confirm('会話履歴をすべて削除しますか？')) return
   await api.deleteHistory(userStore.userId)
@@ -74,7 +99,7 @@ const hasMessages = computed(() => chatStore.messages.length > 0)
 
 <template>
   <div class="chat-layout">
-    <!-- サイドパネル（アバター） -->
+    <!-- サイドパネル（アバター＋背景） -->
     <aside class="sidebar">
       <div class="app-title">月夜の狼</div>
       <WolfAvatar :state="chatStore.avatarState" />
@@ -84,6 +109,27 @@ const hasMessages = computed(() => chatStore.messages.length > 0)
         <button class="btn-ghost small danger" @click="clearHistory" :disabled="!hasMessages">
           🗑 履歴を削除
         </button>
+      </div>
+
+      <!-- 物語・背景パネル -->
+      <div class="bg-panel">
+        <button class="bg-head" @click="bgOpen = !bgOpen">
+          <span>📖 物語・背景</span>
+          <span v-if="bgFlash" class="bg-flash">自動更新</span>
+          <span class="bg-caret">{{ bgOpen ? '▾' : '▸' }}</span>
+        </button>
+        <div v-if="bgOpen" class="bg-body">
+          <textarea
+            v-model="background"
+            class="bg-text"
+            rows="6"
+            placeholder="この狼との関係・物語・世界観を書けます。会話が進むと自動で追記・更新されます。"
+          />
+          <button class="btn-ghost small" @click="saveBackground" :disabled="bgSaving">
+            {{ bgSaving ? '保存中...' : '背景を保存' }}
+          </button>
+          <p class="bg-note">会話に応じて数ターンごとに自動更新されます</p>
+        </div>
       </div>
 
       <div class="user-info">
@@ -96,7 +142,7 @@ const hasMessages = computed(() => chatStore.messages.length > 0)
     <main class="chat-main">
       <div class="chat-header">
         <h2>月夜の狼チャット</h2>
-        <span class="header-sub">設定した性格で狼が応答します</span>
+        <span class="header-sub">設定した性格・背景で狼が応答します</span>
       </div>
 
       <div class="messages" ref="messagesEl">
@@ -140,7 +186,7 @@ const hasMessages = computed(() => chatStore.messages.length > 0)
 
 /* サイドバー */
 .sidebar {
-  width: 260px;
+  width: 280px;
   background: var(--surface);
   border-right: 1px solid var(--border);
   display: flex;
@@ -170,6 +216,57 @@ const hasMessages = computed(() => chatStore.messages.length > 0)
 .danger { color: #f87171 !important; border-color: #f8717144 !important; }
 .danger:hover:not(:disabled) { background: #f8717111 !important; }
 
+/* 背景パネル */
+.bg-panel {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface2);
+  overflow: hidden;
+}
+.bg-head {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 12px;
+  background: transparent;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 0;
+}
+.bg-head:hover { background: var(--accent)11; }
+.bg-caret { margin-left: auto; color: var(--text-muted); }
+.bg-flash {
+  font-size: 10px;
+  color: #0f0f1a;
+  background: var(--accent2);
+  border-radius: 10px;
+  padding: 1px 8px;
+  font-weight: 700;
+  animation: flash 1.2s ease-in-out;
+}
+@keyframes flash {
+  0% { transform: scale(0.8); opacity: 0; }
+  30% { transform: scale(1.05); opacity: 1; }
+  100% { opacity: 1; }
+}
+.bg-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 12px 12px;
+}
+.bg-text {
+  width: 100%;
+  resize: vertical;
+  min-height: 110px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.bg-note { font-size: 10px; color: var(--text-muted); line-height: 1.4; }
+
 .user-info {
   margin-top: auto;
   display: flex;
@@ -178,6 +275,7 @@ const hasMessages = computed(() => chatStore.messages.length > 0)
   gap: 2px;
   font-size: 12px;
   color: var(--text-muted);
+  padding-top: 8px;
 }
 .uid { font-family: monospace; font-size: 10px; opacity: 0.6; }
 
@@ -264,8 +362,8 @@ textarea {
 
 /* レスポンシブ */
 @media (max-width: 640px) {
-  .sidebar { width: 72px; padding: 12px 8px; }
-  .sidebar .app-title, .sidebar-actions, .user-info span:first-child { display: none; }
+  .sidebar { width: 84px; padding: 12px 8px; }
+  .sidebar .app-title, .sidebar-actions, .bg-panel, .user-info span:first-child { display: none; }
   .chat-header .header-sub { display: none; }
 }
 </style>

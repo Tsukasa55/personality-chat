@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from .database import init_db
 from .config import get_settings
-from .routes import auth, personality, chat
+from .routes import auth, personality, chat, background
 
 settings = get_settings()
 
@@ -32,6 +32,7 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(personality.router)
 app.include_router(chat.router)
+app.include_router(background.router)
 
 
 @app.get("/health")

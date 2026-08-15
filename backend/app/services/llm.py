@@ -28,6 +28,12 @@ SYSTEM_PROMPT_TEMPLATE = """あなたは「月夜の狼」という名の会話A
 - 神経症傾向が0.7以上の場合：感情豊かに、気持ちを表に出して反応する
 - 神経症傾向が0.3未満の場合：感情より事実・論理を重視し、冷静に話す
 
+## 物語・背景・関係性（あなたとユーザーの関係、世界観）
+{background}
+
+上記の背景を踏まえ、一貫した人物として自然に振る舞ってください。
+背景が未設定の場合は、無理に設定を作らず自然に会話してください。
+
 ## 感情状態の出力
 応答の最初の行に必ず以下の形式で感情状態を記述してください：
 [STATE:normal] または [STATE:happy] または [STATE:sad] または [STATE:thinking]
@@ -43,13 +49,14 @@ SYSTEM_PROMPT_TEMPLATE = """あなたは「月夜の狼」という名の会話A
 """
 
 
-def _build_system_prompt(weights: PersonalityWeights) -> str:
+def _build_system_prompt(weights: PersonalityWeights, background: str = "") -> str:
     return SYSTEM_PROMPT_TEMPLATE.format(
         openness=weights.openness,
         conscientiousness=weights.conscientiousness,
         extraversion=weights.extraversion,
         agreeableness=weights.agreeableness,
         neuroticism=weights.neuroticism,
+        background=(background.strip() or "（未設定）"),
     )
 
 
@@ -80,10 +87,11 @@ async def generate_response(
     history: list[dict],  # [{"role": "user"|"model", "parts": [str]}]
     weights: PersonalityWeights,
     api_key: str,
+    background: str = "",
 ) -> tuple[str, AvatarState]:
     """Gemini APIで応答を生成し、(応答テキスト, アバター状態) を返す"""
     genai.configure(api_key=api_key)
-    system_prompt = _build_system_prompt(weights)
+    system_prompt = _build_system_prompt(weights, background)
 
     last_error: Exception | None = None
     for model_name in MODEL_CANDIDATES:
@@ -105,6 +113,54 @@ async def generate_response(
     raise RuntimeError(
         f"利用可能なGeminiモデルが見つかりません。最後のエラー: {last_error}"
     )
+
+
+BACKGROUND_UPDATE_PROMPT = """あなたは物語の記録者です。
+「月夜の狼」というAIキャラクターと、そのユーザーとの関係性・物語・背景を管理しています。
+
+## これまでの背景（現在の記録）
+{current}
+
+## 最近の会話
+{conversation}
+
+## 指示
+最近の会話で明らかになった新しい事実・関係性の変化・出来事を反映し、
+背景の記録を更新してください。次のルールに従ってください:
+- 日本語で、300字以内の簡潔な地の文にまとめる
+- 既存の設定と矛盾しない形で統合する（重要な既存情報は保持）
+- 事実が乏しい場合は、既存の背景をほぼそのまま返す
+- 見出しや箇条書きは使わず、説明文のみを出力する
+- 前置きや「更新しました」等のメタ発言は書かず、背景本文だけを出力する
+
+更新後の背景:"""
+
+
+async def update_background(
+    current_background: str,
+    conversation: str,
+    api_key: str,
+) -> str:
+    """最近の会話を踏まえ、背景・関係性の記録を更新して返す"""
+    genai.configure(api_key=api_key)
+    prompt = BACKGROUND_UPDATE_PROMPT.format(
+        current=(current_background.strip() or "（まだ記録なし）"),
+        conversation=conversation.strip(),
+    )
+    last_error: Exception | None = None
+    for model_name in MODEL_CANDIDATES:
+        try:
+            model = genai.GenerativeModel(model_name=model_name)
+            response = await model.generate_content_async(prompt)
+            text = (response.text or "").strip()
+            return text[:4000] if text else current_background
+        except Exception as e:
+            last_error = e
+            if "not found" in str(e).lower() or "404" in str(e):
+                continue
+            # 背景更新の失敗は致命的でない → 既存を維持
+            return current_background
+    return current_background
 
 
 # デフォルト重みのフォールバック

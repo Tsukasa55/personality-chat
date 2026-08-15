@@ -31,3 +31,12 @@ class Message(Base):
     content_encrypted = Column(Text, nullable=False)  # 暗号化されたメッセージ
     avatar_state = Column(String(20), default="normal")  # normal/happy/sad/thinking
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class Background(Base):
+    """ユーザーと月夜の狼の物語・背景・関係性（暗号化保存・会話で自動更新）"""
+    __tablename__ = "backgrounds"
+
+    user_id = Column(String(36), primary_key=True)
+    content_encrypted = Column(Text, nullable=False)
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now(), server_default=func.now())

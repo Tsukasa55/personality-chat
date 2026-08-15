@@ -50,7 +50,13 @@ export const api = {
     req<PersonalityWeights>(`/personality/${userId}`),
 
   sendMessage: (userId: string, message: string, googleApiKey: string) =>
-    req<{ reply: string; avatar_state: AvatarState; history: MessageOut[] }>('/chat/send', {
+    req<{
+      reply: string
+      avatar_state: AvatarState
+      history: MessageOut[]
+      background: string
+      background_updated: boolean
+    }>('/chat/send', {
       method: 'POST',
       body: JSON.stringify({ user_id: userId, message, google_api_key: googleApiKey }),
     }),
@@ -60,4 +66,13 @@ export const api = {
 
   deleteHistory: (userId: string) =>
     req<{ deleted: number }>(`/chat/history/${userId}`, { method: 'DELETE' }),
+
+  getBackground: (userId: string) =>
+    req<{ background: string; updated_at: string | null }>(`/background/${userId}`),
+
+  setBackground: (userId: string, background: string) =>
+    req<{ background: string; updated_at: string | null }>('/background/', {
+      method: 'PUT',
+      body: JSON.stringify({ user_id: userId, background }),
+    }),
 }

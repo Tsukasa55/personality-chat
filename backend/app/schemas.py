@@ -57,6 +57,19 @@ class ChatResponse(BaseModel):
     reply: str
     avatar_state: AvatarState
     history: list[MessageOut]
+    background: str = ""          # 現在の物語・背景
+    background_updated: bool = False  # このターンで背景が自動更新されたか
+
+
+# ── 背景・物語 ────────────────────────────────────────────
+class BackgroundOut(BaseModel):
+    background: str
+    updated_at: datetime | None = None
+
+
+class BackgroundUpdate(BaseModel):
+    user_id: str
+    background: str = Field(default="", max_length=4000)
 
 
 # ── 履歴 ──────────────────────────────────────────────────
