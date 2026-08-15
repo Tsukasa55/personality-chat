@@ -80,8 +80,10 @@ onMounted(() => {
 
 <style scoped>
 .avatar {
-  /* 動画(540x800・縦長)の比率に合わせ、見切れないようにする */
-  width: min(540px, 92vw);
+  /* 動画(540x800・縦長)の比率を保ちつつ、親コンテナ幅に収める（はみ出し防止） */
+  box-sizing: border-box; /* 枠線を幅に含め、親からのはみ出しを防ぐ */
+  width: 100%;
+  max-width: 540px;
   aspect-ratio: 540 / 800;
   max-height: 88vh;
   border-radius: 16px;
